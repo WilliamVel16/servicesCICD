@@ -1,0 +1,62 @@
+name: Container Apps Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v3
+    - name: Azure Login
+      uses: Azure/login@v1.4.6
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Install az containerapp extension
+      run:
+        az config set extension.use.dynamic_install=yes_without_prompt
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # PYTHON IMAGE BUILD AND PUSH
+    - name: Build Docker Python image
+      run: |
+        docker build --platform linux --tag wvel/pythonservice:latest -f src/python/Dockerfile .
+    - name: Publish Docker Pyhton image
+      run: |
+        docker push wvel/pythonservice:latest
+    - name: Deploy Python Container App
+      run: |
+        az containerapp up --name python-container-app --image wvel/pythonservice:latest --resource-group playingGroup --environment general-container-env --ingres external --target-port 5000
+
+     # GO IMAGE BUILD AND PUSH
+    - name: Build Docker Go image
+      run: |
+        docker build --platform linux --tag wvel/goservice:latest -f src/go/Dockerfile .
+    - name: Publish Docker Go image
+      run: |
+        docker push wvel/goservice:latest
+    - name: Deploy Go Container App
+      run: |
+        az containerapp up --name go-container-app --image wvel/goservice:latest --resource-group playingGroup --environment general-container-env --ingres external --target-port 8081
+
+     # NET IMAGE BUILD AND PUSH
+    - name: Build Docker Net image
+      run: |
+        docker build --platform linux --tag wvel/netservice:latest -f src/net/Dockerfile .
+    - name: Publish Net Pyhton image
+      run: |
+        docker push wvel/netservice:latest
+    - name: Deploy Net Container App
+      run: |
+        az containerapp up --name net-container-app --image wvel/netservice:latest --resource-group playingGroup --environment general-container-env --ingres external --target-port 80
+
+        
