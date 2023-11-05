@@ -1,4 +1,4 @@
-## Infraestructura (Azure)
+## Infraestructura (Azure):
 
 * Un grupo de recursos
 * Una cuenta de almacenamiento
